@@ -10,6 +10,9 @@ use Laravel\Sanctum\HasApiTokens; //
 
 class User extends Authenticatable
 {
+    /**
+     * Les attributs qu'on peut remplir via User::create() ou update()
+     */
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
@@ -18,5 +21,9 @@ class User extends Authenticatable
         'last_name',
         'email',
     ];
+    //relation: a user could have many reservations
+    public function reservation(){
+        return $this->hasMany(Reservation::class);
+    }
 }
 ?>

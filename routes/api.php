@@ -10,7 +10,6 @@ use App\Http\Controllers\ParkingSpotController;
 | API Routes
 |--------------------------------------------------------------------------
 */
-
 // --- Routes Publiques (Tout le monde peut y accéder) ---
 
 // Login avec MetaMask

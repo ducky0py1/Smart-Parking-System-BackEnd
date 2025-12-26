@@ -15,5 +15,10 @@ class ParkingSpot extends Model
         'price', 
         'sensor_id'
     ];
+     // Relation : Une place peut avoir plusieurs réservations (historique)
+     
+     public function reservations(){
+        return $this -> hasMany(Reservation::class);
+     }
 }
 ?>

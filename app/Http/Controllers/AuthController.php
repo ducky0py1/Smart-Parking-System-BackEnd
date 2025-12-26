@@ -1,58 +1,64 @@
 <?php
-
-
-
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // Fonction pour se connecter avec MetaMask
+    // 1. Connexion / Inscription via MetaMask
     public function loginWithWallet(Request $request)
     {
-        // 1. On valide qu'on reçoit bien une adresse
-        $request->validate([
-            'wallet_address' => 'required|string',
+        // On valide qu'on reçoit bien une adresse
+        $validator = Validator::make($request->all(), [
+            'wallet_address' => 'required|string|size:42', // Une adresse ETH fait 42 chars
         ]);
 
-        // 2. On cherche le user, ou on le crée s'il n'existe pas
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Adresse invalide'], 422);
+        }
+
+        // Magie Laravel : Cherche l'user, ou le crée s'il n'existe pas
         $user = User::firstOrCreate(
             ['wallet_address' => $request->wallet_address]
         );
 
-        // 3. On crée un token API (Sanctum) pour lui
+        // On crée un Token de sécurité (Sanctum) pour que React puisse faire des requêtes après
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 4. On renvoie le token et les infos du user au Frontend
         return response()->json([
             'message' => 'Connexion réussie',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+            'token' => $token,
+            'user' => $user
+        ], 200);
+    }
+
+    // 2. Compléter son profil (Nom, Email...)
+    public function updateProfile(Request $request)
+    {
+        // L'utilisateur est déjà identifié grâce au Token Sanctum (middleware)
+        $user = $request->user(); 
+
+        // Validation des entrées
+        $request->validate([
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
+            'email' => 'nullable|email|unique:users,email,' . $user->id, // Unique sauf pour lui-même
+        ]);
+
+        // Mise à jour
+        $user->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+        ]);
+
+        return response()->json([
+            'message' => 'Profil mis à jour avec succès',
             'user' => $user
         ]);
     }
-    
-    // Fonction pour compléter le profil plus tard
-    public function updateProfile(Request $request) {
-        $user = auth()->user(); // Récupère l'utilisateur connecté via le token
-        
-        $request->validate([
-            'first_name' => 'nullable|string',
-            'email' => 'nullable|email|unique:users,email,'.$user->id
-        ]);
-
-        $user->update($request->only(['first_name', 'last_name', 'email']));
-
-        return response()->json(['message' => 'Profil mis à jour', 'user' => $user]);
-    }
 }
-
-
-
-
-
 
 ?>

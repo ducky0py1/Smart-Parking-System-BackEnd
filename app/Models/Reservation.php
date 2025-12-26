@@ -19,12 +19,13 @@ class Reservation extends Model
         'status'
     ];
 
-    // Relation : Une réservation appartient à un User
+    // Relation inverse: Une réservation appartient à un User
     public function user() {
         return $this->belongsTo(User::class);
     }
 
-    // Relation : Une réservation concerne une Place
+    // Relation inverse: Une réservation concerne une Place
+
     public function spot() {
         return $this->belongsTo(ParkingSpot::class, 'parking_spot_id');
     }
