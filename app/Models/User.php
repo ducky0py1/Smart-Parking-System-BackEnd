@@ -16,10 +16,11 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
-        'wallet_address', // Notre identifiant
+        'wallet_address', //  identifiant
         'first_name',
         'last_name',
         'email',
+        'role',
     ];
     //relation: a user could have many reservations
     public function reservation(){

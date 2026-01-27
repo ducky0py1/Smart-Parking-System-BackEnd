@@ -1,4 +1,4 @@
-<?php
+<?php // test in postman, red lbal l "role"
 namespace App\Http\Controllers;
 
 use App\Models\User;
