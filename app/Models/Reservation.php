@@ -18,6 +18,9 @@ class Reservation extends Model
         'end_time',
         'status'
     ];
+    protected $casts = [
+    'end_time' => 'datetime',
+    ];
 
     // Relation inverse: Une réservation appartient à un User
     public function user() {
