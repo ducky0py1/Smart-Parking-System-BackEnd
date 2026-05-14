@@ -19,7 +19,7 @@ class ReservationController extends Controller
         ]);
 
         $user = $request->user(); // L'utilisateur connecté (via Sanctum)
-
+        $spot = ParkingSpot::find($request->spot_id);
         // 2. Vérifier si la place est VRAIMENT libre
         // On utilise une "Transaction DB" pour éviter que 2 personnes réservent en même temps
         return DB::transaction(function () use ($request, $user) {
@@ -37,8 +37,12 @@ class ReservationController extends Controller
                 'parking_spot_id' => $spot->id,
                 'transaction_hash' => $request->transaction_hash,
                 'start_time' => now(),
+                'end_time' => now()->addMinutes(30),
                 'status' => 'active'
             ]);
+            //RESET THE DEBT
+            $user->debt = 0;
+            $user->save();
 
             // 4. Mettre à jour le statut de la place (Elle devient Orange/Réservée)
             $spot->update(['status' => 'reserved']);

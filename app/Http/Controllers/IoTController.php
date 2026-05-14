@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\User;
+use App\Models\Reservation;
 use App\Models\ParkingSpot;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
