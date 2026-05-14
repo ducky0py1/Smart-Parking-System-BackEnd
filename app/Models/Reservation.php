@@ -18,6 +18,9 @@ class Reservation extends Model
         'end_time',
         'status'
     ];
+    protected $casts = [
+    'end_time' => 'datetime',
+    ];
 
     // Relation inverse: Une réservation appartient à un User
     public function user() {
@@ -30,12 +33,6 @@ class Reservation extends Model
         return $this->belongsTo(ParkingSpot::class, 'parking_spot_id');
     }
 }
-
-
-
-
-
-
 
 
 

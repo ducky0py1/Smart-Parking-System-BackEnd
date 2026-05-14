@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ParkingSpot;
 use Illuminate\Http\Request;
-
+use Carbon\Carbon;
 class IoTController extends Controller
 {
     // 1. Le Pico demande : "Quel est le statut de ma place ?"
@@ -42,26 +42,59 @@ class IoTController extends Controller
             $spot->update(['status' => 'occupied']);
             // Optionnel : Ici, on pourrait vérifier si une réservation existait
         } else {
-            // Voiture partie -> La place redevient libre
-            $spot->update(['status' => 'free']);
+
+           // LA VOITURE S'EN VA : Calcul du dépassement
             
-            // On ferme les réservations actives sur cette place
-            $spot->reservations()->where('status', 'active')->update([
-                'status' => 'completed',
-                'end_time' => now()
-            ]);
+            // 1. Trouver la réservation active pour cette place
+            $reservation = Reservation::where('parking_spot_id', $id)
+                                      ->where('status', 'active')
+                                      ->first();
+
+            if ($reservation) {
+                $now = Carbon::now();
+                // Assurez-vous que 'end_time' est bien casté en date dans le modèle Reservation
+                $expectedEndTime = Carbon::parse($reservation->end_time);
+
+                // 2. Vérifier s'il y a un dépassement (Overtime)
+                if ($now->greaterThan($expectedEndTime)) {
+                    // Calcul de la durée en minutes
+                    $minutesOver = $now->diffInMinutes($expectedEndTime);
+                    
+                    // Calcul du prix par minute (Basé sur le prix de la place / 60)
+                    $pricePerMinute = $spot->price / 60;
+                    $penaltyAmount = $minutesOver * $pricePerMinute;
+
+                    // 3. Ajouter la dette à l'utilisateur
+                    $user = $reservation->user;
+                    $user->debt += $penaltyAmount;
+                    $user->save();
+                }
+
+                // 4. Clôturer la réservation
+                $reservation->update([
+                    'status' => 'completed',
+                    'actual_end_time' => $now // ajt cet collone
+                ]);
+            }
+
+            // 5. Libérer la place
+            $spot->update(['status' => 'free']);   
         }
 
-        return response()->json(['message' => 'Statut mis à jour', 'new_status' => $spot->status]);
+        return response()->json([
+            'message' => 'Statut mis à jour', 
+            'new_status' => $spot->status
+        ]);
     }
+
 }
 
 
-
-
-
-
-
+// Explications techniques du calcul :
+// Carbon::parse($reservation->end_time) : Transforme la chaîne de caractères de la base de données en un objet Date manipulable.
+// greaterThan : Vérifie si l'heure actuelle est après l'heure limite payée.
+// diffInMinutes : Calcule précisément le nombre de minutes de retard.
+// Dette : On multiplie les minutes de retard par le prix à la minute. Cette dette est ajoutée au champ debt de la table users.
 
 
 
